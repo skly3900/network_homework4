@@ -1,8 +1,10 @@
-f =open("/home/kuriring/mul.txt","r")
-
+f = open("./mul.txt","r")
 for line in f:
-	url = line.strip()
-	url = url.split('http://')[1]
-	if url.find('www.')>-1:
-		url = url.split('www.')[1]
-	print url
+	line = line.strip('\n')
+	if line.find('http://')>-1:
+		line = line.strip('http://')
+	line = line.split('\n')[0]
+	print line.encode("hex")
+
+a = "www.naver.com"
+print a.encode("hex")
